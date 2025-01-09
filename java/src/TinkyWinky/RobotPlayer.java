@@ -25,6 +25,7 @@ public class RobotPlayer {
      * these variables are static, in Battlecode they aren't actually shared between your robots.
      */
     static int turnCount = 0;
+	static int spawnType = 0;
 
     /**
      * A random number generator.
@@ -108,50 +109,39 @@ public class RobotPlayer {
     }
 
 	public static void spawning(RobotController rc) throws GameActionException {
-		System.out.println("Testing...?!");
-        //RobotInfo[] nearbyAlliedRobots = rc.senseNearbyRobots(1000, rc.getTeam());
-		boolean soldierBool = true;
-		// for(RobotInfo robot : nearbyAlliedRobots){
-		// 	if(robot.getType() == UnitType.SOLDIER){
-		// 		soldierBool = true;
-		// 	}
-		// }
-		MapLocation nextLoc = rc.getLocation().translate(1,0);
-        int roundCount = rc.getRoundNum();
-		System.out.println(roundCount);
-        if (roundCount < 200){
-			System.out.println("What the fuck. ");
-            if (rc.canBuildRobot(UnitType.SPLASHER, rc.getLocation().translate(1,0))) {
-                rc.setIndicatorString("Building Splasher at " + nextLoc);
-                rc.buildRobot(UnitType.SPLASHER, nextLoc);
-                } else {                
-                        if (rc.canBuildRobot(UnitType.SOLDIER, nextLoc)) {
-                            rc.setIndicatorString("Building Soldier at " + nextLoc);
-                            rc.buildRobot(UnitType.SOLDIER, nextLoc);
-                    }
-                }
-            }
-         else {
-            if ((rc.getType().equals(UnitType.LEVEL_ONE_PAINT_TOWER) || rc.getType().equals(UnitType.LEVEL_TWO_PAINT_TOWER) || rc.getType().equals(UnitType.LEVEL_THREE_PAINT_TOWER)) && rc.getRoundNum() > 200) {
-                if (rc.canBuildRobot(UnitType.MOPPER, nextLoc)) {
-                    rc.setIndicatorString("Building Mopper at " + nextLoc);
-                    rc.buildRobot(UnitType.MOPPER, nextLoc);
-                } else if (soldierBool && rc.canBuildRobot(UnitType.SPLASHER, nextLoc)){
-                    rc.setIndicatorString("Building Splasher at " + nextLoc);
-                    rc.buildRobot(UnitType.MOPPER, nextLoc);
-                } else {
-                    if(rc.canBuildRobot(UnitType.SOLDIER, nextLoc)){
-                        rc.setIndicatorString("Building Soldier at " + nextLoc);
-                        rc.buildRobot(UnitType.SOLDIER, nextLoc);
-                    }
-                }
-            }   
-        }
-        if(rc.canBuildRobot(UnitType.SOLDIER, nextLoc)){
-            rc.setIndicatorString("Building Soldier at " + nextLoc);
-            rc.buildRobot(UnitType.SOLDIER, nextLoc);
-        }
+		rc.setIndicatorString(Integer.toString(spawnType));
+		for (Direction dir : shuffleArray(directions,rng)) {
+			MapLocation nextLoc = rc.getLocation().add(dir);
+		if(rc.getRoundNum() < 100){
+			if(spawnType == 2){
+				spawnType = 0;
+			}
+			if(spawnType == 0 && rc.canBuildRobot(UnitType.SOLDIER, nextLoc)){
+				spawnType++;
+				rc.buildRobot(UnitType.SOLDIER, nextLoc);
+			} else if (spawnType == 1 && rc.canBuildRobot(UnitType.SPLASHER, nextLoc)){
+				spawnType++;
+				rc.buildRobot(UnitType.SPLASHER, nextLoc);
+			}
+		} else {
+			if(spawnType == 4){
+				spawnType = 0;
+			}
+			if(spawnType == 0 || spawnType == 2 && rc.canBuildRobot(UnitType.SOLDIER, nextLoc)){
+				spawnType++;
+				rc.buildRobot(UnitType.SOLDIER, nextLoc);
+			} else if (spawnType == 1 || spawnType == 3 && rc.canBuildRobot(UnitType.SPLASHER, nextLoc)){
+				spawnType++;
+				rc.buildRobot(UnitType.SPLASHER, nextLoc);
+			} else if (spawnType == 4 && rc.canBuildRobot(UnitType.MOPPER, nextLoc)){
+				spawnType++;
+				rc.buildRobot(UnitType.MOPPER, nextLoc);
+			}
+
+		}
+
     }
+}
 
 
 	static Direction[] shuffleArray(Direction[] dirs, Random rnd) {
@@ -288,59 +278,68 @@ public class RobotPlayer {
      * This code is wrapped inside the infinite loop in run(), so it is called once per turn.
      */
     public static void runTower(RobotController rc) throws GameActionException{
-		spawning(rc);
-        // If there's a marker adjacent to a tower, remove it at the start of the turn
-		for (Direction dirs : directions) {
-			MapLocation adjSpace = rc.adjacentLocation(dirs);
-			if (rc.canRemoveMark(adjSpace)) {
-				rc.removeMark(adjSpace);
-			}
-		}
-		
-		// If a tower can be upgraded, upgrade it
-		if (rc.getMoney() < rc.getRoundNum() * 2) {
-			if (rc.getType().equals(UnitType.LEVEL_ONE_PAINT_TOWER) || rc.getType().equals(UnitType.LEVEL_TWO_PAINT_TOWER)) {
-				if (rc.canUpgradeTower(rc.getLocation())) {
-					rc.setIndicatorString("Upgrading Paint Tower");
-					rc.upgradeTower(rc.getLocation());
-				}
-			}
-			if (rc.getType().equals(UnitType.LEVEL_ONE_MONEY_TOWER) || rc.getType().equals(UnitType.LEVEL_TWO_MONEY_TOWER)) {
-				if (rc.canUpgradeTower(rc.getLocation())) {
-					rc.setIndicatorString("Upgrading Money Tower");
-					rc.upgradeTower(rc.getLocation());
-				}
-			}
-			if (rc.getType().equals(UnitType.LEVEL_ONE_DEFENSE_TOWER)) {
-				if (rc.canUpgradeTower(rc.getLocation())) {
-					rc.setIndicatorString("Upgrading Defense Tower");
-					rc.upgradeTower(rc.getLocation());
-				}
-			}
-		}
-		
-		// // Track number of moppers near the tower
+		//Information
 		RobotInfo[] nearbyRobots = rc.senseNearbyRobots(-1);
-		// int mopperCount = 0;
-		// for (RobotInfo aBot: nearbyRobots) {
-		// 	if (aBot.type == UnitType.MOPPER) {
-		// 		 mopperCount += 1;
-		// }
-		// spawning(rc);
-
-		// If there's an enemy in range, AOE attack
 		int lowestHealth = 300;
-		for (RobotInfo emBot: nearbyRobots) {
-			if ((rc.getTeam() != emBot.team) && emBot.health <= lowestHealth) {
-				lowestHealth = emBot.health;
+		int roundCount = rc.getRoundNum();
+		//Random Direction
+		for (Direction dir : shuffleArray(directions,rng)) {
+			MapLocation nextLoc = rc.getLocation().add(dir);
+			if(roundCount == 1){
+				if(rc.getType() == UnitType.LEVEL_ONE_PAINT_TOWER){
+					rc.setIndicatorString("Spawning Soldier at " + nextLoc);
+					rc.buildRobot(UnitType.SOLDIER, nextLoc);
+				}
+			} else if (roundCount == 2 && rc.getType() == UnitType.LEVEL_ONE_PAINT_TOWER){
+				if(rc.canBuildRobot(UnitType.MOPPER, nextLoc)){
+					rc.setIndicatorString("Spawning Mopper at " + nextLoc);
+					rc.buildRobot(UnitType.MOPPER, nextLoc);
+				}
 			}
-				if (rc.canAttack(emBot.location) && emBot.health <= lowestHealth) {
-					rc.setIndicatorString("Attacking robot at " + emBot.location);
-					rc.attack(emBot.location);
-					rc.attack(null);
-				}		
 		}
-    }
+
+		if(rc.getPaint() > 300 && rc.getChips() > 1250){
+			for (Direction dirs : directions) {
+				MapLocation adjSpace = rc.adjacentLocation(dirs);
+				if (rc.canRemoveMark(adjSpace)) {
+					rc.removeMark(adjSpace);
+				}				
+			}
+			if (rc.getMoney() < rc.getRoundNum() * 2) {
+				if (rc.getType().equals(UnitType.LEVEL_ONE_PAINT_TOWER) || rc.getType().equals(UnitType.LEVEL_TWO_PAINT_TOWER)) {
+					if (rc.canUpgradeTower(rc.getLocation())) {
+						rc.setIndicatorString("Upgrading Paint Tower");
+						rc.upgradeTower(rc.getLocation());
+					}
+				}else if (rc.getType().equals(UnitType.LEVEL_ONE_MONEY_TOWER) || rc.getType().equals(UnitType.LEVEL_TWO_MONEY_TOWER)) {
+					if (rc.canUpgradeTower(rc.getLocation())) {
+						rc.setIndicatorString("Upgrading Money Tower");
+						rc.upgradeTower(rc.getLocation());
+				}
+				}else if (rc.getType().equals(UnitType.LEVEL_ONE_DEFENSE_TOWER)) {
+					if (rc.canUpgradeTower(rc.getLocation())) {
+						rc.setIndicatorString("Upgrading Defense Tower");
+						rc.upgradeTower(rc.getLocation());
+						}
+					}
+				}
+			if (nearbyRobots.length > 0){
+				spawning(rc); //Hi Amelie-- remove this line. Right now, however, you will never spawn robots if it senses any low health robot. 
+				for (RobotInfo emBot: nearbyRobots) {
+					if ((rc.getTeam() != emBot.team) && emBot.health <= lowestHealth) {
+						lowestHealth = emBot.health;
+					}
+						if (rc.canAttack(emBot.location) && emBot.health <= lowestHealth) {
+							rc.setIndicatorString("Robot with Lowest Health:  " + emBot.location);
+							rc.attack(emBot.location);
+							rc.attack(null);
+						}		
+					}
+				}
+			spawning(rc);
+		}
+		
+	}
 
 	
     /**
