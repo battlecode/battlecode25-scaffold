@@ -107,28 +107,52 @@ public class RobotPlayer {
         // Your code should never reach here (unless it's intentional)! Self-destruction imminent...
     }
 
-	public static void spawning(RobotController rc, int mopperCount) throws GameActionException {
-		if ((rc.getPaint() >= 300 && rc.getMoney() >= 1250 && rc.getRoundNum() > 2) || (rc.getRoundNum() <= 2 && rc.getType() == UnitType.LEVEL_ONE_PAINT_TOWER)) {
-			for (Direction dir : shuffleArray(directions,rng)) {
-				MapLocation nextLoc = rc.getLocation().add(dir);
-				if (rc.getRoundNum() == 1) {rc.buildRobot(UnitType.SOLDIER, nextLoc);}
-				if (rc.getRoundNum() == 2) {rc.buildRobot(UnitType.MOPPER, nextLoc);}
-				// If there are less than x moppers near the tower, spawn more moppers
-				if ((rc.getType().equals(UnitType.LEVEL_ONE_PAINT_TOWER) || rc.getType().equals(UnitType.LEVEL_TWO_PAINT_TOWER) || rc.getType().equals(UnitType.LEVEL_THREE_PAINT_TOWER)) && mopperCount < 1 && rc.getRoundNum() > 200) {
-					if (rc.canBuildRobot(UnitType.MOPPER, nextLoc)) {rc.buildRobot(UnitType.MOPPER, nextLoc);}
-				}
-				if (turnCount % 3 == 0 && rc.canBuildRobot(UnitType.SPLASHER, nextLoc )){
-					rc.buildRobot(UnitType.SPLASHER, nextLoc);
-				} else if (turnCount % 2 == 0 && rc.canBuildRobot(UnitType.MOPPER, nextLoc)){
-					rc.buildRobot(UnitType.MOPPER, nextLoc);
-				}else{
-					if(rc.canBuildRobot(UnitType.SOLDIER, nextLoc)){
-						rc.buildRobot(UnitType.SOLDIER, nextLoc);
-					}
-				}
-			}
-		}
-	}
+	public static void spawning(RobotController rc) throws GameActionException {
+		System.out.println("Testing...?!");
+        //RobotInfo[] nearbyAlliedRobots = rc.senseNearbyRobots(1000, rc.getTeam());
+		boolean soldierBool = true;
+		// for(RobotInfo robot : nearbyAlliedRobots){
+		// 	if(robot.getType() == UnitType.SOLDIER){
+		// 		soldierBool = true;
+		// 	}
+		// }
+		MapLocation nextLoc = rc.getLocation().translate(1,0);
+        int roundCount = rc.getRoundNum();
+		System.out.println(roundCount);
+        if (roundCount < 200){
+			System.out.println("What the fuck. ");
+            if (rc.canBuildRobot(UnitType.SPLASHER, rc.getLocation().translate(1,0))) {
+                rc.setIndicatorString("Building Splasher at " + nextLoc);
+                rc.buildRobot(UnitType.SPLASHER, nextLoc);
+                } else {                
+                        if (rc.canBuildRobot(UnitType.SOLDIER, nextLoc)) {
+                            rc.setIndicatorString("Building Soldier at " + nextLoc);
+                            rc.buildRobot(UnitType.SOLDIER, nextLoc);
+                    }
+                }
+            }
+         else {
+            if ((rc.getType().equals(UnitType.LEVEL_ONE_PAINT_TOWER) || rc.getType().equals(UnitType.LEVEL_TWO_PAINT_TOWER) || rc.getType().equals(UnitType.LEVEL_THREE_PAINT_TOWER)) && rc.getRoundNum() > 200) {
+                if (rc.canBuildRobot(UnitType.MOPPER, nextLoc)) {
+                    rc.setIndicatorString("Building Mopper at " + nextLoc);
+                    rc.buildRobot(UnitType.MOPPER, nextLoc);
+                } else if (soldierBool && rc.canBuildRobot(UnitType.SPLASHER, nextLoc)){
+                    rc.setIndicatorString("Building Splasher at " + nextLoc);
+                    rc.buildRobot(UnitType.MOPPER, nextLoc);
+                } else {
+                    if(rc.canBuildRobot(UnitType.SOLDIER, nextLoc)){
+                        rc.setIndicatorString("Building Soldier at " + nextLoc);
+                        rc.buildRobot(UnitType.SOLDIER, nextLoc);
+                    }
+                }
+            }   
+        }
+        if(rc.canBuildRobot(UnitType.SOLDIER, nextLoc)){
+            rc.setIndicatorString("Building Soldier at " + nextLoc);
+            rc.buildRobot(UnitType.SOLDIER, nextLoc);
+        }
+    }
+
 
 	static Direction[] shuffleArray(Direction[] dirs, Random rnd) {
 		for (int i = dirs.length - 1; i > 0; i--) {
@@ -265,6 +289,7 @@ public class RobotPlayer {
      * This code is wrapped inside the infinite loop in run(), so it is called once per turn.
      */
     public static void runTower(RobotController rc) throws GameActionException{
+		spawning(rc);
         // If there's a marker adjacent to a tower, remove it at the start of the turn
 		for (Direction dirs : directions) {
 			MapLocation adjSpace = rc.adjacentLocation(dirs);
@@ -295,14 +320,14 @@ public class RobotPlayer {
 			}
 		}
 		
-		// Track number of moppers near the tower
+		// // Track number of moppers near the tower
 		RobotInfo[] nearbyRobots = rc.senseNearbyRobots(-1);
-		int mopperCount = 0;
-		for (RobotInfo aBot: nearbyRobots) {
-			if (aBot.type == UnitType.MOPPER) {
-				 mopperCount += 1;
-		}
-		spawning(rc, mopperCount);
+		// int mopperCount = 0;
+		// for (RobotInfo aBot: nearbyRobots) {
+		// 	if (aBot.type == UnitType.MOPPER) {
+		// 		 mopperCount += 1;
+		// }
+		// spawning(rc);
 
 		// If there's an enemy in range, AOE attack
 		int lowestHealth = 300;
@@ -316,8 +341,7 @@ public class RobotPlayer {
 					rc.attack(null);
 				}		
 		}
-    	}
-	}
+    }
 
 	
     /**
