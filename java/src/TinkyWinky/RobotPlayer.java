@@ -45,7 +45,7 @@ public class RobotPlayer {
         Direction.WEST,
         Direction.NORTHWEST,
     };
-
+    //Test Commit
     /**
      * run() is the method that is called when a robot is instantiated in the Battlecode world.
      * It is like the main function for your robot. If this method returns, the robot dies!
