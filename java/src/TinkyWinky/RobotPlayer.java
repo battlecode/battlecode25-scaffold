@@ -402,29 +402,7 @@ public class RobotPlayer {
 
 
 
-        // Sense information about all visible nearby tiles.
-        MapInfo[] nearbyTiles = rc.senseNearbyMapInfos();
-
-		for (MapInfo anInfo : nearbyTiles) {
-			if (anInfo.getMark() == PaintType.ALLY_SECONDARY) {
-				boolean srp = true;
-				for (Direction aDir : directions) {
-					if (!rc.canSenseLocation(anInfo.getMapLocation().add(aDir))) {
-						if(!moveTo(rc, anInfo.getMapLocation().add(aDir))) {
-							srp = false;
-							break;
-						}
-					} else if (rc.senseMapInfo(anInfo.getMapLocation().add(aDir)).hasRuin()) {
-						srp = false;
-						break;
-					}
-				}
-				if (srp) {
-					rc.setIndicatorString("Building");
-					paintPattern(rc, anInfo.getMapLocation(), 4);
-				}
-			}
-		}
+        
 
 		for (Direction aDir : directions) {
 			if (!rc.onTheMap(here.add(aDir))) {
@@ -473,6 +451,18 @@ public class RobotPlayer {
 				eastMark = rc.senseMapInfo(nearestRuin.add(Direction.EAST)).getMark() == PaintType.ALLY_SECONDARY; //Money
 			} catch (GameActionException e) {}
 			boolean anyMark = northMark || southMark || eastMark;
+
+			if (anyMark) {rc.setIndicatorString("Building");}
+			if (northMark) {
+				paintPattern(rc, nearestRuin, 3);
+			}
+			if (southMark) {
+				paintPattern(rc, nearestRuin, 2);
+			}
+			if (eastMark) {
+				paintPattern(rc, nearestRuin, 1);
+			}
+			
 			if (!anyMark) {
 				rc.setIndicatorString("Marking");
 				try {
@@ -498,15 +488,14 @@ public class RobotPlayer {
 				} catch (GameActionException e) {}
 			}
 
-			if (anyMark) {rc.setIndicatorString("Building");}
-			if (northMark) {
-				paintPattern(rc, nearestRuin, 3);
-			}
-			if (southMark) {
-				paintPattern(rc, nearestRuin, 2);
-			}
-			if (eastMark) {
-				paintPattern(rc, nearestRuin, 1);
+			// Sense information about all visible nearby tiles.
+			MapInfo[] nearbyTiles = rc.senseNearbyMapInfos();
+
+			for (MapInfo anInfo : nearbyTiles) {
+				if (anInfo.getMark() == PaintType.ALLY_SECONDARY && rc.senseMapInfo(anInfo.getMapLocation().add(Direction.WEST)).getMark() == PaintType.ALLY_SECONDARY) {
+					rc.setIndicatorString("Building");
+					paintPattern(rc, anInfo.getMapLocation(), 4);
+				}
 			}
 		}
 	}
