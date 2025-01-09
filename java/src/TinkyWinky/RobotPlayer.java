@@ -108,25 +108,21 @@ public class RobotPlayer {
     }
 
 	public static void spawning(RobotController rc, int mopperCount) throws GameActionException {
-		if ((rc.getPaint() >= 300 && rc.getMoney() >= 1000) || (rc.getRoundNum()*2 < rc.getPaint())) {
+		if ((rc.getPaint() >= 300 && rc.getMoney() >= 1250 && rc.getRoundNum() > 2) || (rc.getRoundNum() <= 2 && rc.getType() == UnitType.LEVEL_ONE_PAINT_TOWER)) {
 			for (Direction dir : shuffleArray(directions,rng)) {
 				MapLocation nextLoc = rc.getLocation().add(dir);
+				if (rc.getRoundNum() == 1) {rc.buildRobot(UnitType.SOLDIER, nextLoc);}
+				if (rc.getRoundNum() == 2) {rc.buildRobot(UnitType.MOPPER, nextLoc);}
 				// If there are less than x moppers near the tower, spawn more moppers
 				if ((rc.getType().equals(UnitType.LEVEL_ONE_PAINT_TOWER) || rc.getType().equals(UnitType.LEVEL_TWO_PAINT_TOWER) || rc.getType().equals(UnitType.LEVEL_THREE_PAINT_TOWER)) && mopperCount < 1 && rc.getRoundNum() > 200) {
-					if (rc.canBuildRobot(UnitType.MOPPER, nextLoc)) {
-						rc.setIndicatorString("Building Mopper at " + nextLoc);
-						rc.buildRobot(UnitType.MOPPER, nextLoc);
-					}
+					if (rc.canBuildRobot(UnitType.MOPPER, nextLoc)) {rc.buildRobot(UnitType.MOPPER, nextLoc);}
 				}
 				if (turnCount % 3 == 0 && rc.canBuildRobot(UnitType.SPLASHER, nextLoc )){
-					rc.setIndicatorString("Building Splasher at " + nextLoc);
 					rc.buildRobot(UnitType.SPLASHER, nextLoc);
 				} else if (turnCount % 2 == 0 && rc.canBuildRobot(UnitType.MOPPER, nextLoc)){
-					rc.setIndicatorString("Building Mopper at " + nextLoc);
 					rc.buildRobot(UnitType.MOPPER, nextLoc);
 				}else{
 					if(rc.canBuildRobot(UnitType.SOLDIER, nextLoc)){
-						rc.setIndicatorString("Building Soldier at " + nextLoc);
 						rc.buildRobot(UnitType.SOLDIER, nextLoc);
 					}
 				}
@@ -493,11 +489,13 @@ public class RobotPlayer {
 		MapInfo[] nearbyTiles = rc.senseNearbyMapInfos();
 		int counter = 0;
 		for (MapInfo anInfo : nearbyTiles) {
-			if (anInfo.getMark() == PaintType.ALLY_SECONDARY && rc.senseMapInfo(anInfo.getMapLocation().add(Direction.WEST)).getMark() == PaintType.ALLY_SECONDARY) {
-				rc.setIndicatorString("Building");
-				paintPattern(rc, anInfo.getMapLocation(), 4);
+			if (rc.canSenseLocation(anInfo.getMapLocation().add(Direction.WEST))) {
+				if (anInfo.getMark() == PaintType.ALLY_SECONDARY && rc.senseMapInfo(anInfo.getMapLocation().add(Direction.WEST)).getMark() == PaintType.ALLY_SECONDARY) {
+					rc.setIndicatorString("Building");
+					paintPattern(rc, anInfo.getMapLocation(), 4);
+				}
 			}
-			rc.setIndicatorDot(anInfo.getMapLocation(), counter, (int) Math.max(0, counter - 207), (int) Math.max(0, counter - 414));
+			rc.setIndicatorDot(anInfo.getMapLocation(), Math.min(counter*11,255), (int) Math.min(Math.max(0, counter*11 - 207),255), (int) Math.min(Math.max(0, counter*11 - 414),255));
 			counter ++;
 		}
 	}
@@ -709,7 +707,9 @@ public class RobotPlayer {
     }
     
     public static boolean moveUnified(RobotController rc, MapLocation loc, int threshold) throws GameActionException {
-    	if (rc.getLocation().equals(loc) || rc.getMovementCooldownTurns() >= 10) {
+		System.out.println("I'm alive");
+    	if (rc.getLocation().equals(loc) || rc.getMovementCooldownTurns() >= 10 || rc.getPaint() == 0) {
+			System.out.println("fuck");
     		return false;
     	} else if(rc.getLocation().distanceSquaredTo(loc) > 2) {
     		if (wallRider(rc, loc, threshold)) {
@@ -1716,7 +1716,6 @@ public class RobotPlayer {
         	dir = rc.getLocation().directionTo(centerOfMap);
         }
         Direction secDir = dirSecDir(rc.getLocation(), loc);
-		if (rc.getPaint() == 0) {return false;}
         return scoot(rc, dir, secDir, false);
     }
     
