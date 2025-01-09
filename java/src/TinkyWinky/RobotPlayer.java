@@ -487,16 +487,18 @@ public class RobotPlayer {
 					}
 				} catch (GameActionException e) {}
 			}
+		}
 
-			// Sense information about all visible nearby tiles.
-			MapInfo[] nearbyTiles = rc.senseNearbyMapInfos();
-
-			for (MapInfo anInfo : nearbyTiles) {
-				if (anInfo.getMark() == PaintType.ALLY_SECONDARY && rc.senseMapInfo(anInfo.getMapLocation().add(Direction.WEST)).getMark() == PaintType.ALLY_SECONDARY) {
-					rc.setIndicatorString("Building");
-					paintPattern(rc, anInfo.getMapLocation(), 4);
-				}
+		// Sense information about all visible nearby tiles.
+		MapInfo[] nearbyTiles = rc.senseNearbyMapInfos();
+		int counter = 0;
+		for (MapInfo anInfo : nearbyTiles) {
+			if (anInfo.getMark() == PaintType.ALLY_SECONDARY && rc.senseMapInfo(anInfo.getMapLocation().add(Direction.WEST)).getMark() == PaintType.ALLY_SECONDARY) {
+				rc.setIndicatorString("Building");
+				paintPattern(rc, anInfo.getMapLocation(), 4);
 			}
+			rc.setIndicatorDot(anInfo.getMapLocation(), counter, (int) Math.max(0, counter - 207), (int) Math.max(0, counter - 414));
+			counter ++;
 		}
 	}
 
@@ -1714,6 +1716,7 @@ public class RobotPlayer {
         	dir = rc.getLocation().directionTo(centerOfMap);
         }
         Direction secDir = dirSecDir(rc.getLocation(), loc);
+		if (rc.getPaint() == 0) {return false;}
         return scoot(rc, dir, secDir, false);
     }
     
