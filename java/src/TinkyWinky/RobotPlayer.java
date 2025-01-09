@@ -269,7 +269,15 @@ public class RobotPlayer {
      * This code is wrapped inside the infinite loop in run(), so it is called once per turn.
      */
     public static void runTower(RobotController rc) throws GameActionException{
-        // If a tower can be upgraded, upgrade it
+        // If there's a marker adjacent to a tower, remove it at the start of the turn
+		for (Direction dirs : directions) {
+			MapLocation adjSpace = rc.adjacentLocation(dirs);
+			if (rc.canRemoveMark(adjSpace)) {
+				rc.removeMark(adjSpace);
+			}
+		}
+		
+		// If a tower can be upgraded, upgrade it
 		if (rc.getMoney() < rc.getRoundNum() * 2) {
 			if (rc.getType().equals(UnitType.LEVEL_ONE_PAINT_TOWER) || rc.getType().equals(UnitType.LEVEL_TWO_PAINT_TOWER)) {
 				if (rc.canUpgradeTower(rc.getLocation())) {
@@ -303,15 +311,15 @@ public class RobotPlayer {
 		// If there's an enemy in range, AOE attack
 		int lowestHealth = 300;
 		for (RobotInfo emBot: nearbyRobots) {
-			if ((rc.getTeam() != emBot.team)) {
-				MapLocation attackSpot = emBot.location;
-				if (rc.canAttack(attackSpot)) {
-					rc.setIndicatorString("Attacking robot at " + emBot.location);
-					rc.attack(attackSpot);
-					rc.attack(null);
-					}
-				}
+			if ((rc.getTeam() != emBot.team) && emBot.health <= lowestHealth) {
+				lowestHealth = emBot.health;
 			}
+				if (rc.canAttack(emBot.location) && emBot.health <= lowestHealth) {
+					rc.setIndicatorString("Attacking robot at " + emBot.location);
+					rc.attack(emBot.location);
+					rc.attack(null);
+				}		
+		}
     	}
 	}
 
