@@ -1,4 +1,4 @@
-package examplefuncsplayer;
+package firstmatchplayer;
 
 import battlecode.common.*;
 
@@ -15,7 +15,7 @@ import java.util.Set;
  * The run() method inside this class is like your main function: this is what we'll call once your robot
  * is created!
  */
-public class RobotPlayer {
+public class FirstMatchRobotPlayer {
     /**
      * We will use this variable to count the number of turns this robot has been alive.
      * You can use static variables like this to save any information you want. Keep in mind that even though
